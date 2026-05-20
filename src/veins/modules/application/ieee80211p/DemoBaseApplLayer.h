@@ -66,7 +66,9 @@ public:
 
     enum DemoApplMessageKinds {
         SEND_BEACON_EVT,
-        SEND_WSA_EVT
+        SEND_WSA_EVT,
+        SEND_LEADER_EVT,
+        SEND_TIMEOUT_EVT
     };
 
 protected:
@@ -180,6 +182,8 @@ protected:
     /* messages for periodic events such as beacon and WSA transmissions */
     cMessage* sendBeaconEvt;
     cMessage* sendWSAEvt;
+    cMessage* sendLeaderEvt;
+    cMessage* sendTimeoutEvt;
 };
 
 } // namespace veins

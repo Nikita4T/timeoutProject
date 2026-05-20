@@ -34,8 +34,8 @@ void NakagamiFading::filterSignal(Signal* signal)
     auto receiverPos = signal->getReceiverPoa().pos.getPositionAt();
 
     const double M_CLOSE = 1.5;
-    const double M_FAR = 0.75;
-    const double DIS_THRESHOLD = 80;
+    const double M_FAR = 1; //0.75 original
+    const double DIS_THRESHOLD = 150; //80 original
 
     EV_TRACE << "Add NakagamiFading ..." << endl;
 

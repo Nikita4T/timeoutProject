@@ -26,6 +26,10 @@
 
 #include "veins/modules/application/ieee80211p/DemoBaseApplLayer.h"
 
+#include "veins/modules/application/traci/TraCIDemo11pMessage_m.h"
+
+#include <unordered_set>
+
 using namespace omnetpp;
 
 namespace veins {
@@ -44,6 +48,26 @@ class VEINS_API MyVeinsApp : public DemoBaseApplLayer {
 public:
     void initialize(int stage) override;
     void finish() override;
+
+protected:
+    bool sentMessage;
+    simtime_t lastDroveAt;
+    int msgID;
+    simtime_t start;
+    simtime_t interval;
+    simtime_t timeoutMin;
+    simtime_t timeoutMax;
+    simtime_t packetReceivedAt;
+    simtime_t timeoutChosen;
+    std::unordered_set<int> msgIDs;
+    TraCIDemo11pMessage* scheduledMsg;
+    int hopCount;
+    enum timeoutTypes {
+            NOMOD,
+            DISTANCE,
+            SIGNALPOWER
+        };
+    enum timeoutTypes timeoutType;
 
 protected:
     void onBSM(DemoSafetyMessage* bsm) override;

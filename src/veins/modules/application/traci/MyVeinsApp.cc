@@ -22,25 +22,70 @@
 
 #include "veins/modules/application/traci/MyVeinsApp.h"
 
+#include "veins/modules/application/traci/TraCIDemo11pMessage_m.h"
+
+#include "veins/base/phyLayer/PhyToMacControlInfo.h"
+#include "veins/modules/phy/DeciderResult80211.h"
+
 using namespace veins;
 
 Define_Module(veins::MyVeinsApp);
+
+
 
 void MyVeinsApp::initialize(int stage)
 {
     DemoBaseApplLayer::initialize(stage);
     if (stage == 0) {
         // Initializing members and pointers of your application goes here
+        msgID = 0;
+        scheduledMsg = nullptr;
+        hopCount = 0;
+        //start = SimTime(60); //SIMTIME_M
+        start = par("start");
+        // to activate msg intervall see handleselfmessage function. Data collection is based on single message right now
+        interval = par("interval");
+        // timeout window range
+        timeoutMin = par("timeoutMin");
+        timeoutMax = par("timeoutMax");
+        // based on what timeout windows should be modified
+        int tmp = par("timeoutType");
+        switch (tmp) {
+            case 0: {
+                timeoutType = NOMOD;
+                break;
+            }
+            case 1: {
+                timeoutType = DISTANCE;
+                break;
+            }
+            case 2: {
+                timeoutType = SIGNALPOWER;
+                break;
+            }
+
+        }
+        // time when first packet was received. -1 if we never received one
+        packetReceivedAt = -1;
+        // the random timeout that was chosen from window. Is 10 when timeout has been canceled.
+        timeoutChosen = 10;
         EV << "Initializing " << par("appName").stringValue() << std::endl;
     }
     else if (stage == 1) {
         // Initializing members that require initialized other modules goes here
+        if (getParentModule()->getIndex() == 0) {
+            scheduleAt(start, sendLeaderEvt);
+        }
     }
 }
 
 void MyVeinsApp::finish()
 {
     DemoBaseApplLayer::finish();
+    recordScalar("packetsReceived", msgIDs.size());
+    recordScalar("packetReceivedAt", packetReceivedAt);
+    recordScalar("timeoutChosen", timeoutChosen);
+    recordScalar("hopCount", hopCount);
     // statistics recording goes here
 }
 
@@ -50,10 +95,79 @@ void MyVeinsApp::onBSM(DemoSafetyMessage* bsm)
     // code for handling the message goes here
 }
 
-void MyVeinsApp::onWSM(BaseFrame1609_4* wsm)
+void MyVeinsApp::onWSM(BaseFrame1609_4* frame)
 {
     // Your application has received a data message from another car or RSU
     // code for handling the message goes here, see TraciDemo11p.cc for examples
+
+    TraCIDemo11pMessage* wsm = check_and_cast<TraCIDemo11pMessage*>(frame);
+
+    if (scheduledMsg != nullptr && scheduledMsg->isScheduled()) {
+        // we got a message while in timeout. Cancel it
+        // if we cancel timeout we return timeoutChosen to default value so we know it didnt get through
+        timeoutChosen = 10;
+        cancelAndDelete(scheduledMsg);
+        //scheduledMsg has to be nullptr now to avoid dangling pointer issues.
+        scheduledMsg = nullptr;
+        findHost()->getDisplayString().setTagArg("i", 1, "green");
+   } else {
+       // if we already had the packet ignore it
+       int tmp = wsm->getMsgID();
+       if (msgIDs.count(tmp) == 1) {
+           return;
+       }
+       // first time receiving packet going in timeout
+       msgIDs.insert(tmp);
+       packetReceivedAt = simTime();
+       //schedule message after a timeout
+       scheduledMsg = wsm->dup();
+       findHost()->getDisplayString().setTagArg("i", 1, "blue");
+       timeoutChosen = uniform(timeoutMin , timeoutMax);
+       //how to modify our chosen timeout
+       switch (timeoutType) {
+           case NOMOD: {
+               break;
+           }
+           case DISTANCE: {
+               //im not sure if curPosition variables always works for this so im using this method
+               auto mobility = TraCIMobilityAccess().get(getParentModule());
+               Coord myPos = mobility->getPositionAt(simTime());
+               double distance = myPos.distance(wsm->getLastSenderPos());
+               double factor;
+               factor = distance / 650; // With simplepathloss its around 575 of effective transmission range. With nakagami probability id increase the 0 second timeout to 650
+               if (distance>650) {
+                   factor = 1;
+               }
+               timeoutChosen = timeoutChosen*(1-factor);
+               break;
+           }
+           case SIGNALPOWER: {
+               // getting signal power is a bit rough. Have to go through control info to get to the decider.
+               if (cObject* ctrlInfo = wsm->getControlInfo()) {
+                   if (PhyToMacControlInfo* phyCtrlInfo = dynamic_cast<PhyToMacControlInfo*>(ctrlInfo)) {
+                       DeciderResult80211* result = dynamic_cast<DeciderResult80211*>(phyCtrlInfo->getDeciderResult());
+                       if (result) {
+                           //because of the heavy fluctuations and similar signal powers at 200+ distances i decided to make the timeoutscaling begin at -85
+                           double recvPower_dBm = result->getRecvPower_dBm();
+                           if (recvPower_dBm>-85) {
+                              break;
+                           }
+                           if (recvPower_dBm<-90) {
+                              timeoutChosen = 0;
+                              break;
+                           }
+                           double factor = (-85 - recvPower_dBm) / (-85 - -90);
+                           timeoutChosen = timeoutChosen*(1-factor);
+                       }
+                   }
+               }
+              break;
+           }
+
+       }
+       scheduleAt(simTime() + timeoutChosen, scheduledMsg);
+   }
+
 }
 
 void MyVeinsApp::onWSA(DemoServiceAdvertisment* wsa)
@@ -64,9 +178,58 @@ void MyVeinsApp::onWSA(DemoServiceAdvertisment* wsa)
 
 void MyVeinsApp::handleSelfMsg(cMessage* msg)
 {
-    DemoBaseApplLayer::handleSelfMsg(msg);
     // this method is for self messages (mostly timers)
     // it is important to call the DemoBaseApplLayer function for BSM and WSM transmission
+
+    if (TraCIDemo11pMessage* wsm = dynamic_cast<TraCIDemo11pMessage*>(msg)) {
+            //we get here after our non canceled timeout. Sending message.
+            scheduledMsg = nullptr;
+            findHost()->getDisplayString().setTagArg("i", 1, "yellow");
+            hopCount = wsm->getHopCount();
+            hopCount++;
+            TraCIDemo11pMessage* wsmDup = wsm->dup();
+            wsmDup->setHopCount(hopCount);
+            populateWSM(wsmDup);
+            if (timeoutType==DISTANCE) {
+                auto mobility = TraCIMobilityAccess().get(getParentModule());
+                Coord myPos = mobility->getPositionAt(simTime());
+                wsmDup->setLastSenderPos(myPos);
+            }
+            sendDown(wsmDup);
+            delete wsm;
+            return;
+    }
+    switch (msg->getKind()) {
+        // Its a leader msg. Start broadcasting a new message and schedule next one.
+        case SEND_LEADER_EVT: {
+            findHost()->getDisplayString().setTagArg("i", 1, "yellow");
+            msgIDs.insert(msgID);
+            TraCIDemo11pMessage* wsm = new TraCIDemo11pMessage();
+            populateWSM(wsm);
+            wsm->setHopCount(0);
+            wsm->setMsgID(msgID);
+            if (timeoutType==DISTANCE) {
+                auto mobility = TraCIMobilityAccess().get(getParentModule());
+                Coord myPos = mobility->getPositionAt(simTime());
+                wsm->setLastSenderPos(myPos);
+            }
+            msgID++;
+            sendDown(wsm);
+            findHost()->getDisplayString().setTagArg("i", 1, "red");
+            // to enable intervall msging add the following line
+            // scheduleAt(simTime() + interval, sendLeaderEvt);
+            break;
+        }
+        // Not used at the moment
+        case SEND_TIMEOUT_EVT: {
+            // just for the offchance code arrives here
+            DemoBaseApplLayer::handleSelfMsg(msg);
+        }
+
+        default: {
+            DemoBaseApplLayer::handleSelfMsg(msg);
+        }
+        }
 }
 
 void MyVeinsApp::handlePositionUpdate(cObject* obj)
@@ -74,4 +237,5 @@ void MyVeinsApp::handlePositionUpdate(cObject* obj)
     DemoBaseApplLayer::handlePositionUpdate(obj);
     // the vehicle has moved. Code that reacts to new positions goes here.
     // member variables such as currentPosition and currentSpeed are updated in the parent class
+    // stopped for for at least 10s?T
 }

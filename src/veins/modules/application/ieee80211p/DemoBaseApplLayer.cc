@@ -69,6 +69,8 @@ void DemoBaseApplLayer::initialize(int stage)
 
         sendBeaconEvt = new cMessage("beacon evt", SEND_BEACON_EVT);
         sendWSAEvt = new cMessage("wsa evt", SEND_WSA_EVT);
+        sendLeaderEvt = new cMessage("leader evt", SEND_LEADER_EVT);
+        sendTimeoutEvt = new cMessage("timeout evt", SEND_TIMEOUT_EVT);
 
         generatedBSMs = 0;
         generatedWSAs = 0;
@@ -254,17 +256,19 @@ void DemoBaseApplLayer::finish()
     recordScalar("generatedWSMs", generatedWSMs);
     recordScalar("receivedWSMs", receivedWSMs);
 
-    recordScalar("generatedBSMs", generatedBSMs);
-    recordScalar("receivedBSMs", receivedBSMs);
+    //recordScalar("generatedBSMs", generatedBSMs);
+    //recordScalar("receivedBSMs", receivedBSMs);
 
-    recordScalar("generatedWSAs", generatedWSAs);
-    recordScalar("receivedWSAs", receivedWSAs);
+    //recordScalar("generatedWSAs", generatedWSAs);
+    //recordScalar("receivedWSAs", receivedWSAs);
 }
 
 DemoBaseApplLayer::~DemoBaseApplLayer()
 {
     cancelAndDelete(sendBeaconEvt);
     cancelAndDelete(sendWSAEvt);
+    cancelAndDelete(sendLeaderEvt);
+    cancelAndDelete(sendTimeoutEvt);
     findHost()->unsubscribe(BaseMobility::mobilityStateChangedSignal, this);
 }
 

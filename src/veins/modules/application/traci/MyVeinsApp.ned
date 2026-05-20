@@ -28,6 +28,13 @@ import org.car2x.veins.modules.application.ieee80211p.DemoBaseApplLayer;
 //
 simple MyVeinsApp extends DemoBaseApplLayer
 {
-    @class(veins::MyVeinsApp);
-    string appName = default("My first Veins App!");
+    parameters:
+        @class(veins::MyVeinsApp);
+        string appName = default("Timeout Project");
+        double start @unit(s);
+        double interval @unit(s);
+        double timeoutMin @unit(s);
+        double timeoutMax @unit(s);
+        int timeoutType; // cant declare enums here so 0 for NOMOD, 1 for DISTANCE, 2 for SIGNALPOWER
+        
 }
