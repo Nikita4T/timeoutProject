@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!-- debug config -->
+<launch>
+    <copy file="line.net.xml" />
+    <copy file="lineFlow.rou.xml" />
+    <copy file="line.sumocfg" type="config" />
+</launch>
