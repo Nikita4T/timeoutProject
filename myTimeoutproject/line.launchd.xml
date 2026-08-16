@@ -2,6 +2,6 @@
 <!-- debug config -->
 <launch>
     <copy file="line.net.xml" />
-    <copy file="lineFlow.rou.xml" />
+    <copy file="lineFlow30.rou.xml" />
     <copy file="line.sumocfg" type="config" />
 </launch>

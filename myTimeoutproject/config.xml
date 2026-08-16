@@ -33,13 +33,12 @@
 
 <root>
     <AnalogueModels>
-        <AnalogueModel type="SimplePathlossModel" thresholding="true">
-            <parameter name="alpha" type="double" value="2.0"/>
-        </AnalogueModel>
-        
-        <AnalogueModel type="NakagamiFading" thresholding="false">
-            <parameter name="constM" type="bool" value="false"/>
-        </AnalogueModel>
+    	<AnalogueModel type="SimplePathlossModel" thresholding="true">
+	        <parameter name="alpha" type="double" value="2.0"/>
+	    </AnalogueModel>
+	    <AnalogueModel type="NakagamiFading" thresholding="false">
+	    	<parameter name="constM" type="bool" value="false"/>
+	    </AnalogueModel>
     </AnalogueModels>
     <Decider type="Decider80211p">
         <!-- The center frequency on which the phy listens-->

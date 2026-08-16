@@ -7,7 +7,19 @@
 
     <input>
         <net-file value="line.net.xml"/>
-        <route-files value="lineFlow.rou.xml"/>
+        <route-files value="lineFlow30.rou.xml"/>
     </input>
+    
+    <time>
+    	<step-length value="0.1"/>
+	</time>
+    
+    <report>
+        <no-step-log value="true"/>
+        <aggregate-warnings value="1"/>
+        <no-warnings value="true"/>
+        <xml-validation value="never"/>
+        <xml-validation.net value="never"/>
+    </report>
 
 </configuration>

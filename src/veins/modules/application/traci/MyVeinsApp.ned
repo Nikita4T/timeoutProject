@@ -35,6 +35,7 @@ simple MyVeinsApp extends DemoBaseApplLayer
         double interval @unit(s);
         double timeoutMin @unit(s);
         double timeoutMax @unit(s);
+        double scalingDistance; // for distance based: scaling distance based on this distance.
         int timeoutType; // cant declare enums here so 0 for NOMOD, 1 for DISTANCE, 2 for SIGNALPOWER
-        
+        int distanceLock; // for distance based: makes timeoutmin bigger so later percent of vehicles are forced as relays if they are reached 0=NOMOD 1=FIRST25 2=FIRST50 3=FIRST75
 }

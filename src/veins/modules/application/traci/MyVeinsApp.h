@@ -62,12 +62,20 @@ protected:
     std::unordered_set<int> msgIDs;
     TraCIDemo11pMessage* scheduledMsg;
     int hopCount;
+    double scalingDistance;
     enum timeoutTypes {
             NOMOD,
             DISTANCE,
             SIGNALPOWER
         };
     enum timeoutTypes timeoutType;
+    enum distanceLocks {
+            NOMODIFICATION,
+            FIRST25,
+            FIRST50,
+            FIRST75
+        };
+    enum distanceLocks distanceLock;
 
 protected:
     void onBSM(DemoSafetyMessage* bsm) override;

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 2026-01-08 05:28:56 by Eclipse SUMO netedit Version 1.11.0
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <vType id="vtypeauto" accel="1" decel="1" sigma="0" length="4" minGap="0" maxSpeed="30" color="1,0,0" carFollowModel="Krauss" speedDev="0" />
+    <route edges="E0 E1" color="yellow" id="route_0"/>
+
+    <vehicle id="veh_00" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="3000.00" departSpeed="30"/>
+    <vehicle id="veh_01" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2880.00" departSpeed="30"/>
+    <vehicle id="veh_02" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2760.00" departSpeed="30"/>
+    <vehicle id="veh_03" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2640.00" departSpeed="30"/>
+    <vehicle id="veh_04" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2520.00" departSpeed="30"/>
+    <vehicle id="veh_05" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2400.00" departSpeed="30"/>
+    <vehicle id="veh_06" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2280.00" departSpeed="30"/>
+    <vehicle id="veh_07" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2160.00" departSpeed="30"/>
+    <vehicle id="veh_08" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="2040.00" departSpeed="30"/>
+    <vehicle id="veh_09" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1920.00" departSpeed="30"/>
+    <vehicle id="veh_10" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1800.00" departSpeed="30"/>
+    <vehicle id="veh_11" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1680.00" departSpeed="30"/>
+    <vehicle id="veh_12" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1560.00" departSpeed="30"/>
+    <vehicle id="veh_13" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1440.00" departSpeed="30"/>
+    <vehicle id="veh_14" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1320.00" departSpeed="30"/>
+    <vehicle id="veh_15" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1200.00" departSpeed="30"/>
+    <vehicle id="veh_16" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="1080.00" departSpeed="30"/>
+    <vehicle id="veh_17" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="960.00" departSpeed="30"/>
+    <vehicle id="veh_18" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="840.00" departSpeed="30"/>
+    <vehicle id="veh_19" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="720.00" departSpeed="30"/>
+    <vehicle id="veh_20" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="600.00" departSpeed="30"/>
+    <vehicle id="veh_21" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="480.00" departSpeed="30"/>
+    <vehicle id="veh_22" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="360.00" departSpeed="30"/>
+    <vehicle id="veh_23" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="240.00" departSpeed="30"/>
+    <vehicle id="veh_24" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="120.00" departSpeed="30"/>
+    <vehicle id="veh_25" type="vtypeauto" route="route_0" depart="0.00" departLane="0" departPos="0.00" departSpeed="30"/>
+</routes>

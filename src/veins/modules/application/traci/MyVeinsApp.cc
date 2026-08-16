@@ -37,7 +37,8 @@ void MyVeinsApp::initialize(int stage)
 {
     DemoBaseApplLayer::initialize(stage);
     if (stage == 0) {
-        // Initializing members and pointers of your application goes here
+        // Initializing members and pointers of your application goes heres
+        //msg tracking
         msgID = 0;
         scheduledMsg = nullptr;
         hopCount = 0;
@@ -48,7 +49,9 @@ void MyVeinsApp::initialize(int stage)
         // timeout window range
         timeoutMin = par("timeoutMin");
         timeoutMax = par("timeoutMax");
+        scalingDistance = par("scalingDistance");
         // based on what timeout windows should be modified
+        //roundabout way to initialize enum
         int tmp = par("timeoutType");
         switch (tmp) {
             case 0: {
@@ -65,6 +68,27 @@ void MyVeinsApp::initialize(int stage)
             }
 
         }
+        //another enum initialize
+        int tmp2 = par("distanceLock");
+        switch (tmp2) {
+            case 0: {
+                distanceLock = NOMODIFICATION;
+                break;
+            }
+            case 1: {
+                distanceLock = FIRST25;
+                break;
+            }
+            case 2: {
+                distanceLock = FIRST50;
+                break;
+            }
+            case 3: {
+                distanceLock = FIRST75;
+                break;
+            }
+
+        }
         // time when first packet was received. -1 if we never received one
         packetReceivedAt = -1;
         // the random timeout that was chosen from window. Is 10 when timeout has been canceled.
@@ -74,6 +98,7 @@ void MyVeinsApp::initialize(int stage)
     else if (stage == 1) {
         // Initializing members that require initialized other modules goes here
         if (getParentModule()->getIndex() == 0) {
+            //leader sends msg at start
             scheduleAt(start, sendLeaderEvt);
         }
     }
@@ -81,6 +106,7 @@ void MyVeinsApp::initialize(int stage)
 
 void MyVeinsApp::finish()
 {
+    //scaler recording
     DemoBaseApplLayer::finish();
     recordScalar("packetsReceived", msgIDs.size());
     recordScalar("packetReceivedAt", packetReceivedAt);
@@ -111,21 +137,21 @@ void MyVeinsApp::onWSM(BaseFrame1609_4* frame)
         scheduledMsg = nullptr;
         findHost()->getDisplayString().setTagArg("i", 1, "green");
    } else {
-       // if we already had the packet ignore it
+       // if we already received the packet ignore it
        int tmp = wsm->getMsgID();
        if (msgIDs.count(tmp) == 1) {
            return;
        }
-       // first time receiving packet going in timeout
+       // first time receiving packet, saving packet, going in timeout
        msgIDs.insert(tmp);
        packetReceivedAt = simTime();
        //schedule message after a timeout
        scheduledMsg = wsm->dup();
        findHost()->getDisplayString().setTagArg("i", 1, "blue");
-       timeoutChosen = uniform(timeoutMin , timeoutMax);
-       //how to modify our chosen timeout
+       //how to modify our chosen timeout based on timeoutType
        switch (timeoutType) {
            case NOMOD: {
+               timeoutChosen = uniform(timeoutMin , timeoutMax);
                break;
            }
            case DISTANCE: {
@@ -134,14 +160,47 @@ void MyVeinsApp::onWSM(BaseFrame1609_4* frame)
                Coord myPos = mobility->getPositionAt(simTime());
                double distance = myPos.distance(wsm->getLastSenderPos());
                double factor;
-               factor = distance / 650; // With simplepathloss its around 575 of effective transmission range. With nakagami probability id increase the 0 second timeout to 650
-               if (distance>650) {
+               simtime_t timeoutMinFactored = timeoutMin;
+               //EV << "The distance is: " << distance;
+               // Scaling timeoutMax with Distance. With used parameters 620 is ok.
+               factor = distance / scalingDistance;
+               if (distance>scalingDistance) {
                    factor = 1;
                }
-               timeoutChosen = timeoutChosen*(1-factor);
+               // How much Vehicles to hold back with minTimeout
+               switch (distanceLock) {
+                case NOMODIFICATION:
+                    break;
+                case FIRST25:
+                    if (distance<=(0.25*scalingDistance)) {
+                        timeoutMinFactored = 0.75*timeoutMax;
+
+                    }
+                    break;
+                case FIRST50:
+                    if (distance<=(0.5*scalingDistance)) {
+                        timeoutMinFactored = 0.5*timeoutMax;
+
+                    }
+                    break;
+                case FIRST75:
+                    if (distance<=(0.75*scalingDistance)) {
+                        timeoutMinFactored = 0.25*timeoutMax;
+
+                    }
+                    break;
+                default:
+                    break;
+               }
+               simtime_t timeoutMaxFactored = timeoutMax*(1-factor);
+               //chosen Contentionwindow
+               timeoutChosen = uniform(timeoutMinFactored , timeoutMaxFactored);
+               //timeoutChosen = timeoutMax*(1-factor);
                break;
            }
            case SIGNALPOWER: {
+               simtime_t timeoutMinFactored = timeoutMin;
+               simtime_t timeoutMaxFactored = timeoutMax;
                // getting signal power is a bit rough. Have to go through control info to get to the decider.
                if (cObject* ctrlInfo = wsm->getControlInfo()) {
                    if (PhyToMacControlInfo* phyCtrlInfo = dynamic_cast<PhyToMacControlInfo*>(ctrlInfo)) {
@@ -149,15 +208,19 @@ void MyVeinsApp::onWSM(BaseFrame1609_4* frame)
                        if (result) {
                            //because of the heavy fluctuations and similar signal powers at 200+ distances i decided to make the timeoutscaling begin at -85
                            double recvPower_dBm = result->getRecvPower_dBm();
-                           if (recvPower_dBm>-85) {
-                              break;
-                           }
-                           if (recvPower_dBm<-90) {
+                           if (recvPower_dBm<-92.5) {
                               timeoutChosen = 0;
                               break;
                            }
-                           double factor = (-85 - recvPower_dBm) / (-85 - -90);
-                           timeoutChosen = timeoutChosen*(1-factor);
+
+                           if (recvPower_dBm>-88.1) {
+                              timeoutMinFactored = timeoutMax*0.5;
+                           }
+                           else {
+                               double factor = (-88.1 - recvPower_dBm) / (-88.1 - -92.5);
+                               timeoutMaxFactored = timeoutMaxFactored*(1-factor);
+                           }
+                           timeoutChosen = uniform(timeoutMinFactored, timeoutMaxFactored);
                        }
                    }
                }
@@ -182,12 +245,13 @@ void MyVeinsApp::handleSelfMsg(cMessage* msg)
     // it is important to call the DemoBaseApplLayer function for BSM and WSM transmission
 
     if (TraCIDemo11pMessage* wsm = dynamic_cast<TraCIDemo11pMessage*>(msg)) {
-            //we get here after our non canceled timeout. Sending message.
+            //we get here after our non canceled timeout. Sending message and tracking stats.
             scheduledMsg = nullptr;
             findHost()->getDisplayString().setTagArg("i", 1, "yellow");
             hopCount = wsm->getHopCount();
             hopCount++;
             TraCIDemo11pMessage* wsmDup = wsm->dup();
+            //inserting values to msg
             wsmDup->setHopCount(hopCount);
             populateWSM(wsmDup);
             if (timeoutType==DISTANCE) {
@@ -200,14 +264,16 @@ void MyVeinsApp::handleSelfMsg(cMessage* msg)
             return;
     }
     switch (msg->getKind()) {
-        // Its a leader msg. Start broadcasting a new message and schedule next one.
+        // Its a leader msg. Start broadcasting a new message and if intervall msging schedule next one.
         case SEND_LEADER_EVT: {
             findHost()->getDisplayString().setTagArg("i", 1, "yellow");
             msgIDs.insert(msgID);
             TraCIDemo11pMessage* wsm = new TraCIDemo11pMessage();
+            //inserting values in msg
             populateWSM(wsm);
             wsm->setHopCount(0);
             wsm->setMsgID(msgID);
+            //we need coordinates for distance scaling
             if (timeoutType==DISTANCE) {
                 auto mobility = TraCIMobilityAccess().get(getParentModule());
                 Coord myPos = mobility->getPositionAt(simTime());
@@ -224,6 +290,7 @@ void MyVeinsApp::handleSelfMsg(cMessage* msg)
         case SEND_TIMEOUT_EVT: {
             // just for the offchance code arrives here
             DemoBaseApplLayer::handleSelfMsg(msg);
+            break;
         }
 
         default: {
