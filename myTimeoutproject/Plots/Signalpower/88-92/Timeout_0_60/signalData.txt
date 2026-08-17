@@ -1,0 +1,2 @@
+signalScalingStart = -88.1
+signalScalingEnd = -92.5
