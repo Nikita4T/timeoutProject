@@ -27,7 +27,7 @@
 
 use List::Util qw(shuffle);
 
-my $command = "timeout -k 10s 300s ./run -u Cmdenv -c";
+my $command = "./run -u Cmdenv -c";
 
 my @configs = `./run -a`;
 my @runs = ();
