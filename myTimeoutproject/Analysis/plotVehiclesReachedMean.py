@@ -1,3 +1,8 @@
+# The data-processing workflow in this script was inspired by the
+# "Exercise with Veins" tutorial by Lorenzo Ghiro:
+# https://ans.unibs.it/docs/veins_exercise.html
+#
+# The analysis and visualization were adapted and extended for this project.
 import re
 import pandas as pd
 from glob import glob
