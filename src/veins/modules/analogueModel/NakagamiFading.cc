@@ -20,6 +20,9 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
+// Modified by Nikita Hess, 2026.
+// Changed M Parameters
+// See Git history for detailed changes.
 
 #include "veins/modules/analogueModel/NakagamiFading.h"
 
