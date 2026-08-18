@@ -19,7 +19,10 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-
+// Modified by Nikita Hess, 2026.
+// Extended for contention-based forwarding and timeout-based
+// message dissemination experiments.
+// See Git history for detailed changes.
 #pragma once
 
 #include "veins/veins.h"
